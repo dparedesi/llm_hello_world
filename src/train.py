@@ -94,16 +94,17 @@ def train():
         pbar.set_postfix({'loss': f'{loss.item():.4f}', 'lr': f'{lr:.6f}'})
         
         # Evaluate and save checkpoint periodically
-        if iter_num % config.eval_interval == 0 or iter_num == config.max_iters - 1:
+        if (iter_num > 0 and iter_num % config.eval_interval == 0) or iter_num == config.max_iters - 1:
             losses = estimate_loss(model, train_data, val_data, config.eval_iters, device)
             
             print(f"\n[Iter {iter_num}] train loss: {losses['train']:.4f}, val loss: {losses['val']:.4f}")
             
-            # Save best model
+            # Save best model (with improved validation loss)
             if losses['val'] < best_val_loss:
                 best_val_loss = losses['val']
                 checkpoint_path = os.path.join(config.checkpoint_dir, 'best_model.pt')
                 save_checkpoint(model, optimizer, iter_num, losses['val'], checkpoint_path)
+                print(f"  → New best model! Val loss improved to {best_val_loss:.4f}")
             
             # Save regular checkpoint
             if iter_num % (config.eval_interval * 2) == 0:
